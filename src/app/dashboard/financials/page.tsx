@@ -1,5 +1,6 @@
 import { FinancialSummary } from "@/components/financials/FinancialSummary";
 import { ExpenseBreakdown } from "@/components/financials/ExpenseBreakdown";
+import { AddExpenseForm } from "@/components/financials/AddExpenseForm";
 
 // Mock Data
 const MOCK_FINANCIALS = {
@@ -36,6 +37,10 @@ export default function FinancialsPage() {
         grossRevenue={MOCK_FINANCIALS.grossRevenue} 
         totalExpenses={totalExpenses} 
       />
+
+      <div className="max-w-2xl">
+        <AddExpenseForm />
+      </div>
 
       <ExpenseBreakdown 
         grossRevenue={MOCK_FINANCIALS.grossRevenue}

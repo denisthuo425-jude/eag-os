@@ -16,7 +16,7 @@ interface Headache {
 }
 
 const URGENCY_LEVELS = ["High", "Medium", "Low"] as const;
-const DEPARTMENTS = ["Pharmacy", "Lab", "Nursing", "Clinical Doctor", "Housekeeper", "Admin", "Front Office"];
+const DEPARTMENTS = ["General / Facility", "Pharmacy", "Lab", "Nursing", "Clinical Doctor", "Housekeeper", "Admin", "Front Office"];
 
 export function HeadachesWidget() {
   const [headaches, setHeadaches] = useState<Headache[]>([]);
@@ -25,7 +25,7 @@ export function HeadachesWidget() {
   // Form state
   const [description, setDescription] = useState("");
   const [urgency, setUrgency] = useState<"High" | "Medium" | "Low">("Medium");
-  const [department, setDepartment] = useState("Nursing");
+  const [department, setDepartment] = useState("General / Facility");
 
   const fetchHeadaches = async () => {
     setLoading(true);
@@ -60,7 +60,7 @@ export function HeadachesWidget() {
       .insert([
         {
           date_reported: new Date().toISOString().split('T')[0],
-          reported_by_name: "Active Session User", // Ideally dynamic, but using placeholder
+          reported_by_name: 'Admin',
           description,
           status: "Logged",
           urgency,
@@ -76,7 +76,7 @@ export function HeadachesWidget() {
       fetchHeadaches();
       setDescription("");
       setUrgency("Medium");
-      setDepartment("Nursing");
+      setDepartment("General / Facility");
     }
   };
 
@@ -112,7 +112,7 @@ export function HeadachesWidget() {
         
         {/* Add Form */}
         <form onSubmit={handleAdd} className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-2">
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-3">
             <input 
               type="text" 
               value={description} 
@@ -121,22 +121,22 @@ export function HeadachesWidget() {
               className="w-full text-sm p-2 border rounded" 
               required 
             />
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               <select 
                 value={urgency} 
                 onChange={e => setUrgency(e.target.value as any)} 
-                className="w-1/3 text-sm p-2 border rounded bg-white"
+                className="flex-1 min-w-[140px] text-sm p-2 border rounded bg-white"
               >
                 {URGENCY_LEVELS.map(u => <option key={u} value={u}>{u} Urgency</option>)}
               </select>
               <select 
                 value={department} 
                 onChange={e => setDepartment(e.target.value)} 
-                className="w-1/3 text-sm p-2 border rounded bg-white"
+                className="flex-1 min-w-[140px] text-sm p-2 border rounded bg-white"
               >
                 {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
-              <button type="submit" className="w-1/3 flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors text-sm font-medium">
+              <button type="submit" className="flex-1 min-w-[100px] flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors text-sm font-medium">
                 <Plus className="w-4 h-4 mr-1" /> Log
               </button>
             </div>
