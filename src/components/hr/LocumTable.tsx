@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-type Department = "Pharmacy" | "Lab" | "Nursing" | "Clinical Doctor" | "Housekeeper" | "Admin";
+type Department = "Pharmacy" | "Lab" | "Nursing" | "Clinical Doctor" | "Housekeeper" | "Admin" | "Front Office";
 
 interface LocumEntry {
   id: string;
@@ -16,13 +17,11 @@ interface LocumEntry {
   rate: number;
 }
 
-const DEPARTMENTS: Department[] = ["Pharmacy", "Lab", "Nursing", "Clinical Doctor", "Housekeeper", "Admin"];
+const DEPARTMENTS: Department[] = ["Pharmacy", "Lab", "Nursing", "Clinical Doctor", "Housekeeper", "Admin", "Front Office"];
 
 export function LocumTable() {
-  const [entries, setEntries] = useState<LocumEntry[]>([
-    { id: "1", name: "Jane Doe", department: "Nursing", date: "2023-10-25", hours: 12, rate: 500 },
-    { id: "2", name: "Dr. Smith", department: "Clinical Doctor", date: "2023-10-26", hours: 8, rate: 1500 },
-  ]);
+  const [entries, setEntries] = useState<LocumEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [newName, setNewName] = useState("");
   const [newDept, setNewDept] = useState<Department>("Nursing");
@@ -30,23 +29,51 @@ export function LocumTable() {
   const [newHours, setNewHours] = useState("");
   const [newRate, setNewRate] = useState("");
 
-  const handleAdd = (e: React.FormEvent) => {
+  const fetchData = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('locum_shifts')
+      .select('*')
+      .order('date', { ascending: false });
+      
+    if (error) {
+      console.error("Error fetching locum shifts:", error);
+    } else {
+      setEntries(data as LocumEntry[] || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName || !newDate || !newHours || !newRate) return;
 
-    const entry: LocumEntry = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newName,
-      department: newDept,
-      date: newDate,
-      hours: parseFloat(newHours),
-      rate: parseFloat(newRate),
-    };
+    const { data, error } = await supabase
+      .from('locum_shifts')
+      .insert([
+        {
+          name: newName,
+          department: newDept,
+          date: newDate,
+          hours: parseFloat(newHours),
+          rate: parseFloat(newRate),
+        }
+      ])
+      .select();
 
-    setEntries([...entries, entry]);
-    setNewName("");
-    setNewHours("");
-    setNewRate("");
+    if (error) {
+      console.error("Error adding locum shift:", error);
+    } else if (data) {
+      setEntries([data[0] as LocumEntry, ...entries]);
+      setNewName("");
+      setNewHours("");
+      setNewRate("");
+      setNewDept("Nursing");
+    }
   };
 
   return (
@@ -101,7 +128,11 @@ export function LocumTable() {
               </tr>
             </thead>
             <tbody>
-              {entries.map(entry => (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading locum shifts...</td>
+                </tr>
+              ) : entries.map(entry => (
                 <tr key={entry.id} className="border-b hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">{entry.name}</td>
                   <td className="px-4 py-3">
@@ -113,7 +144,7 @@ export function LocumTable() {
                   <td className="px-4 py-3 text-right font-semibold text-slate-900">{formatCurrency(entry.hours * entry.rate)}</td>
                 </tr>
               ))}
-              {entries.length === 0 && (
+              {!loading && entries.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No locum shifts recorded yet.</td>
                 </tr>

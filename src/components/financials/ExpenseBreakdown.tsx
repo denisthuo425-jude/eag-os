@@ -39,7 +39,7 @@ export function ExpenseBreakdown({ grossRevenue, expenses, departmentalSupplies 
                   {expense.category === 'Facility Rent' && isRentHigh && (
                     <div className="flex items-center text-danger text-xs bg-red-50 px-2 py-1 rounded" title="Rent exceeds 20% of Gross Revenue">
                       <AlertCircle className="w-3 h-3 mr-1" />
-                      > 20% Rev
+                      &gt; 20% Rev
                     </div>
                   )}
                 </div>
