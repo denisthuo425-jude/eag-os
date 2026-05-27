@@ -1,8 +1,6 @@
 import { FinancialSummary } from "@/components/financials/FinancialSummary";
 import { ExpenseBreakdown } from "@/components/financials/ExpenseBreakdown";
-import { AddExpenseForm } from "@/components/financials/AddExpenseForm";
 import { AddRevenueForm } from "@/components/financials/AddRevenueForm";
-import { LogSuppliesForm } from "@/components/financials/LogSuppliesForm";
 import { supabase } from "@/lib/supabase";
 
 // This forces Next.js to fetch fresh data every time you load the page
@@ -52,10 +50,8 @@ export default async function FinancialsPage() {
       />
 
       {/* Middle Row: The Data Entry Forms */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AddRevenueForm />
-        <LogSuppliesForm />
-        <AddExpenseForm />
       </div>
 
       {/* Bottom Row: The Breakdown Data */}

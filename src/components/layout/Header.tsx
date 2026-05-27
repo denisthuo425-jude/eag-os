@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Bell, User, Settings, CheckCircle2 } from "lucide-react";
 
 type SessionType = "Dr. Jack (Clinic Lead)" | "Denis Thuo (Admin)";
@@ -130,8 +131,8 @@ export function Header() {
                 <h3 className="font-semibold text-sm text-slate-800">Preferences</h3>
               </div>
               <div className="p-2">
-                <button className="w-full text-left p-2 text-sm text-slate-700 hover:bg-slate-50 rounded">Account Settings</button>
-                <button className="w-full text-left p-2 text-sm text-slate-700 hover:bg-slate-50 rounded">System Preferences</button>
+                <Link href="/dashboard/preferences" onClick={() => setIsSettingsOpen(false)} className="block w-full text-left p-2 text-sm text-slate-700 hover:bg-slate-50 rounded">Account Settings</Link>
+                <Link href="/dashboard/preferences" onClick={() => setIsSettingsOpen(false)} className="block w-full text-left p-2 text-sm text-slate-700 hover:bg-slate-50 rounded">System Preferences</Link>
                 <button className="w-full text-left p-2 text-sm text-danger hover:bg-red-50 rounded mt-1">Log Out</button>
               </div>
             </div>
