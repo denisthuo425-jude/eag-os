@@ -11,7 +11,7 @@ const navItems = [
 
 export function Sidebar() {
   return (
-    <aside className="w-64 bg-primary text-white flex flex-col h-full shadow-xl">
+    <aside className="print:hidden w-64 bg-primary text-white flex flex-col h-full shadow-xl">
       <div className="p-6">
         <h1 className="text-2xl font-bold tracking-wider">EAG-OS</h1>
         <p className="text-xs text-blue-200 mt-1 uppercase tracking-widest">Medical ERP</p>

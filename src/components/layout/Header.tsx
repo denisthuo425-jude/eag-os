@@ -33,7 +33,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shadow-sm sticky top-0 z-10">
+    <header className="print:hidden h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shadow-sm sticky top-0 z-10">
       <div>
         <h2 className="text-xl font-semibold text-slate-800">Dashboard</h2>
       </div>
