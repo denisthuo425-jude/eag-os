@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Plus } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Staff } from "./StaffDirectory";
 
@@ -93,13 +93,21 @@ export function LeaveManager() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Leave Management</CardTitle>
-        <CardDescription>Track and manage staff leave requests.</CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between pb-2">
+        <div>
+          <CardTitle>Leave Management</CardTitle>
+          <CardDescription>Track and manage staff leave requests.</CardDescription>
+        </div>
+        <button 
+          onClick={() => window.print()} 
+          className="print:hidden flex items-center px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded transition-colors text-sm font-medium"
+        >
+          <Printer className="w-4 h-4 mr-2" /> Export PDF
+        </button>
       </CardHeader>
       <CardContent>
         {/* Add Entry Form */}
-        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+        <form onSubmit={handleAdd} className="print:hidden grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
           <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-700 mb-1">Start Date</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full text-sm p-2 border rounded" required />
@@ -137,8 +145,8 @@ export function LeaveManager() {
         </form>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+        <div className="overflow-x-auto print:overflow-visible print:shadow-none">
+          <table className="w-full text-sm text-left print:w-full print:text-black">
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
               <tr>
                 <th className="px-4 py-3">Staff Member</th>
