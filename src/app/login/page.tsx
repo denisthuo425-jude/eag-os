@@ -2,73 +2,81 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ShieldAlert } from "lucide-react";
+import { Lock, Mail, Activity, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock Role-Based Access Control
-    if ((email === "admin@eagos.com" || email === "director@eagos.com") && password === "password") {
+    setIsAuthenticating(true);
+    // Demo Login: Just redirect after a tiny delay for effect
+    setTimeout(() => {
       router.push("/dashboard");
-    } else {
-      setError("Unauthorized access. Admin or Medical Director credentials required.");
-    }
+    }, 500);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-            <Lock className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">EAG-OS</h1>
-          <p className="text-slate-500 mt-2">Secure access for authorized personnel only.</p>
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
+      
+      {/* Subtle Background Effects */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+      
+      {/* Brand Header */}
+      <div className="absolute top-8 left-8 flex items-center space-x-3">
+        <div className="w-10 h-10 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center">
+          <Activity className="w-6 h-6 text-primary" />
         </div>
+        <div className="text-white font-bold tracking-widest text-lg">
+          EAG-OS <span className="text-slate-500 font-normal">| Equity Afya Gikomba</span>
+        </div>
+      </div>
 
-        <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+      <div className="max-w-md w-full relative z-10">
+        
+        {/* Card */}
+        <div className="bg-slate-900/80 backdrop-blur-xl p-10 rounded-3xl border border-slate-800 shadow-2xl">
+          
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-semibold text-white tracking-tight mb-2">Mission Control</h1>
+            <p className="text-sm text-slate-400">Authenticate to access the ERP</p>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-6">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-danger text-sm rounded-lg flex items-start">
-                <ShieldAlert className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+            
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-slate-500" />
                 </div>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block w-full pl-12 pr-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:ring-1 focus:ring-primary focus:border-primary transition-all sm:text-sm placeholder:text-slate-600 outline-none"
                   placeholder="admin@eagos.com"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Password</label>
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-500" />
                 </div>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block w-full pl-12 pr-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:ring-1 focus:ring-primary focus:border-primary transition-all sm:text-sm placeholder:text-slate-600 outline-none"
                   placeholder="••••••••"
                 />
               </div>
@@ -76,15 +84,18 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+              disabled={isAuthenticating}
+              className="w-full flex justify-between items-center py-3.5 px-6 rounded-xl shadow-lg text-sm font-semibold text-slate-900 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-yellow-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed group"
             >
-              Sign In
+              <span>{isAuthenticating ? "Authenticating..." : "Sign In to Console"}</span>
+              {!isAuthenticating && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
+          
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-8">
-          &copy; {new Date().getFullYear()} Equity Afya Gikomba. All rights reserved.
+        <p className="text-center text-xs text-slate-600 mt-8 font-mono">
+          SYSTEM SECURED • {new Date().getFullYear()} EAG-OS
         </p>
       </div>
     </div>
