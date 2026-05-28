@@ -8,10 +8,20 @@ export default function PreferencesPage() {
   const [whatsappReminders, setWhatsappReminders] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Profile Form State
+  const [firstName, setFirstName] = useState("Denis");
+  const [lastName, setLastName] = useState("Thuo");
+  const [email, setEmail] = useState("denisthuo425@gmail.com");
 
   const handleSave = () => {
     setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 800);
+    setTimeout(() => {
+      setIsSaving(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000); // Hide success message after 3 seconds
+    }, 800);
   };
 
   return (
@@ -50,16 +60,16 @@ export default function PreferencesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
-                  <input type="text" defaultValue="Denis" className="w-full p-2 border rounded text-sm" />
+                  <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full p-2 border rounded text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
-                  <input type="text" defaultValue="Thuo" className="w-full p-2 border rounded text-sm" />
+                  <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full p-2 border rounded text-sm" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                <input type="email" defaultValue="denisthuo425@gmail.com" className="w-full p-2 border rounded text-sm" />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2 border rounded text-sm" />
               </div>
             </CardContent>
           </Card>
@@ -93,7 +103,10 @@ export default function PreferencesPage() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end items-center space-x-4">
+            {saveSuccess && (
+              <span className="text-sm font-medium text-green-600 animate-pulse">Profile Updated!</span>
+            )}
             <button
               onClick={handleSave}
               disabled={isSaving}

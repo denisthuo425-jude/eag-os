@@ -2,72 +2,72 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Search, Plus, Phone, Mail, Building2 } from "lucide-react";
+import { Loader2, Contact, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export function VendorDirectory() {
   const [vendors, setVendors] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // New Vendor Form State
-  const [newName, setNewName] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [newPhone, setNewPhone] = useState("");
-  const [newEmail, setNewEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Form State
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+
+  // 1. Fetch live data when the widget loads
   useEffect(() => {
     fetchVendors();
   }, []);
 
   const fetchVendors = async () => {
-    try {
-      const { data, error } = await supabase.from('vendors').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      if (data) setVendors(data);
-    } catch (error) {
-      console.error("Error fetching vendors:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    const { data, error } = await supabase
+      .from('vendors')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (data) setVendors(data);
+    setIsLoading(false);
   };
 
-  const filteredVendors = vendors.filter(v => 
-    (v.name && v.name.toLowerCase().includes(searchQuery.toLowerCase())) || 
-    (v.category && v.category.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
+  // 2. Handle Form Submission
   const handleAddVendor = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName || !newCategory) return;
-    
+    e.preventDefault(); // <--- THIS STOPS THE PAGE FROM RELOADING!
+    if (!name || !category) return;
+
     setIsSubmitting(true);
-    
+
     try {
-      const { error } = await supabase.from('vendors').insert([
-        {
-          name: newName,
-          category: newCategory,
-          phone: newPhone,
-          email: newEmail
-        }
-      ]);
-      
+      const payload = {
+        name: name,
+        category: category,
+        phone: phone,
+        email: email,
+        status: 'Active'
+      };
+
+      const { data, error } = await supabase
+        .from('vendors')
+        .insert([payload])
+        .select();
+
       if (error) throw error;
-      
-      // Reset form
-      setNewName("");
-      setNewCategory("");
-      setNewPhone("");
-      setNewEmail("");
-      setIsAdding(false);
-      
-      // Refresh local state
-      await fetchVendors();
-    } catch (error) {
-      console.error("Error adding vendor:", error);
+
+      // Success! Add the new vendor to the top of the UI list instantly
+      if (data && data.length > 0) {
+        setVendors([data[0], ...vendors]);
+      }
+
+      // Clear the form
+      setName("");
+      setCategory("");
+      setPhone("");
+      setEmail("");
+
+    } catch (error: any) {
+      alert("DATABASE REJECTED VENDOR: " + error.message);
+      console.error("Full error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,89 +75,84 @@ export function VendorDirectory() {
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-start justify-between pb-2">
-        <div>
-          <CardTitle className="flex items-center space-x-2">
-            <Building2 className="w-5 h-5 text-primary" />
-            <span>Vendor Directory</span>
-          </CardTitle>
-          <CardDescription>Emergency contacts and supplier info.</CardDescription>
-        </div>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="p-2 bg-blue-50 text-primary rounded hover:bg-blue-100 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
+      <CardHeader className="pb-3 border-b border-slate-100">
+        <CardTitle className="flex items-center text-lg text-slate-800">
+          <Contact className="w-5 h-5 mr-2 text-primary" />
+          Vendor Directory
+        </CardTitle>
+        <CardDescription>Emergency contacts and supply chain.</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        
-        {isAdding && (
-          <form onSubmit={handleAddVendor} className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-            <h4 className="text-sm font-semibold text-slate-800">Add New Vendor</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Vendor Name" value={newName} onChange={e => setNewName(e.target.value)} className="w-full p-2 border rounded text-xs" required />
-              <input type="text" placeholder="Category" value={newCategory} onChange={e => setNewCategory(e.target.value)} className="w-full p-2 border rounded text-xs" required />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Phone Number" value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full p-2 border rounded text-xs" required />
-              <input type="email" placeholder="Email (Optional)" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full p-2 border rounded text-xs" />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button type="button" onClick={() => setIsAdding(false)} disabled={isSubmitting} className="px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 rounded">Cancel</button>
-              <button type="submit" disabled={isSubmitting} className="px-3 py-1 text-xs font-medium bg-primary text-white hover:bg-blue-800 rounded disabled:opacity-50">
-                {isSubmitting ? "Saving..." : "Save Vendor"}
-              </button>
-            </div>
-          </form>
-        )}
 
-        <div className="relative mb-4">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search vendors..." 
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white transition-colors"
-          />
-        </div>
-
-        <div className="space-y-3 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '300px' }}>
+      <CardContent className="p-0 flex-1 flex flex-col">
+        {/* The Live List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[300px]">
           {isLoading ? (
-            <div className="text-center py-6 text-sm text-slate-500">Loading vendors...</div>
-          ) : filteredVendors.length === 0 ? (
-            <div className="text-center py-6 text-sm text-slate-500">
-              No vendors found matching "{searchQuery}"
-            </div>
+            <p className="text-sm text-slate-500 animate-pulse">Loading vendors...</p>
+          ) : vendors.length === 0 ? (
+            <p className="text-sm text-slate-500">No vendors added yet.</p>
           ) : (
-            filteredVendors.map((vendor) => (
-              <div key={vendor.id} className="p-3 border border-slate-100 rounded-lg hover:border-blue-200 hover:shadow-sm transition-all group">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-semibold text-slate-800 text-sm group-hover:text-primary transition-colors">{vendor.name}</h4>
-                    <p className="text-xs text-blue-600 font-medium mb-2">{vendor.category}</p>
-                    
-                    <div className="space-y-1">
-                      {vendor.phone && (
-                        <div className="flex items-center text-xs text-slate-600">
-                          <Phone className="w-3 h-3 mr-2 text-slate-400" />
-                          {vendor.phone}
-                        </div>
-                      )}
-                      {vendor.email && (
-                        <div className="flex items-center text-xs text-slate-600">
-                          <Mail className="w-3 h-3 mr-2 text-slate-400" />
-                          {vendor.email}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            vendors.map((vendor) => (
+              <div key={vendor.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <div>
+                  <p className="font-semibold text-sm text-slate-800">{vendor.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {vendor.phone && <span>{vendor.phone}</span>}
+                    {vendor.phone && vendor.email && <span> • </span>}
+                    {vendor.email && <span>{vendor.email}</span>}
+                  </p>
                 </div>
+                <span className="text-xs font-medium px-2 py-1 bg-slate-200 text-slate-700 rounded-full">
+                  {vendor.category}
+                </span>
               </div>
             ))
           )}
         </div>
+
+        {/* The Input Form */}
+        <form onSubmit={handleAddVendor} className="p-4 bg-slate-50 border-t border-slate-100 mt-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input
+              type="text"
+              placeholder="Vendor Name"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="md:col-span-1 text-sm p-2 border border-slate-300 rounded focus:ring-primary focus:border-primary"
+            />
+            <input
+              type="text"
+              placeholder="Category"
+              required
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="md:col-span-1 text-sm p-2 border border-slate-300 rounded focus:ring-primary focus:border-primary"
+            />
+            <input
+              type="text"
+              placeholder="Phone"
+              required
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              className="md:col-span-1 text-sm p-2 border border-slate-300 rounded focus:ring-primary focus:border-primary"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="md:col-span-1 text-sm p-2 border border-slate-300 rounded focus:ring-primary focus:border-primary"
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="md:col-span-1 flex items-center justify-center p-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" /> Add</>}
+            </button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

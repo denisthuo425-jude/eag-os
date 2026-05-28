@@ -75,7 +75,7 @@ export function PaymentReminders() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('payment_reminders').insert([
+      const { data, error } = await supabase.from('payment_reminders').insert([
         {
           title: newTitle,
           amount: parseFloat(newAmount),
@@ -83,7 +83,7 @@ export function PaymentReminders() {
           status: 'Upcoming', // Default
           type: 'One-off'
         }
-      ]);
+      ]).select();
 
       if (error) throw error;
 
@@ -93,8 +93,15 @@ export function PaymentReminders() {
       setNewDueDate("");
       setIsAdding(false);
 
-      // Refresh list
-      await fetchReminders();
+      // Refresh list instantly without a page reload
+      if (data && data[0]) {
+        const newReminder = {
+          ...data[0],
+          status: getReminderStatus(data[0].due_date, data[0].status),
+          type: data[0].type || 'One-off'
+        };
+        setReminders([newReminder, ...reminders]);
+      }
     } catch (error) {
       console.error("Error adding payment reminder:", error);
     } finally {
