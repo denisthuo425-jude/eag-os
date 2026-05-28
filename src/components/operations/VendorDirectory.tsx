@@ -1,49 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Search, Plus, Phone, Mail, Building2 } from "lucide-react";
-
-// Dummy data for initial vendors
-const INITIAL_VENDORS = [
-  { id: 1, name: "MedEquip Suppliers Ltd", category: "Medical Supplies", phone: "0712 345 678", email: "sales@medequip.co.ke" },
-  { id: 2, name: "Safaricom (WiFi)", category: "Internet & Comms", phone: "100", email: "business@safaricom.co.ke" },
-  { id: 3, name: "City Garbage Services", category: "Waste Management", phone: "0722 000 111", email: "info@citygarbage.com" },
-  { id: 4, name: "Plumbing Pros", category: "Maintenance", phone: "0733 444 555", email: "help@plumbingpros.ke" },
-];
+import { supabase } from "@/lib/supabase";
 
 export function VendorDirectory() {
-  const [vendors, setVendors] = useState(INITIAL_VENDORS);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // New Vendor Form State
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
+  const fetchVendors = async () => {
+    try {
+      const { data, error } = await supabase.from('vendors').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) setVendors(data);
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredVendors = vendors.filter(v => 
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    v.category.toLowerCase().includes(searchQuery.toLowerCase())
+    (v.name && v.name.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    (v.category && v.category.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleAddVendor = (e: React.FormEvent) => {
+  const handleAddVendor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName || !newCategory) return;
     
-    const newVendor = {
-      id: Date.now(),
-      name: newName,
-      category: newCategory,
-      phone: newPhone,
-      email: ""
-    };
+    setIsSubmitting(true);
     
-    setVendors([newVendor, ...vendors]);
-    setNewName("");
-    setNewCategory("");
-    setNewPhone("");
-    setIsAdding(false);
+    try {
+      const { error } = await supabase.from('vendors').insert([
+        {
+          name: newName,
+          category: newCategory,
+          phone: newPhone,
+          email: newEmail
+        }
+      ]);
+      
+      if (error) throw error;
+      
+      // Reset form
+      setNewName("");
+      setNewCategory("");
+      setNewPhone("");
+      setNewEmail("");
+      setIsAdding(false);
+      
+      // Refresh local state
+      await fetchVendors();
+    } catch (error) {
+      console.error("Error adding vendor:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -72,10 +99,15 @@ export function VendorDirectory() {
               <input type="text" placeholder="Vendor Name" value={newName} onChange={e => setNewName(e.target.value)} className="w-full p-2 border rounded text-xs" required />
               <input type="text" placeholder="Category" value={newCategory} onChange={e => setNewCategory(e.target.value)} className="w-full p-2 border rounded text-xs" required />
             </div>
-            <input type="text" placeholder="Phone Number" value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full p-2 border rounded text-xs" required />
+            <div className="grid grid-cols-2 gap-2">
+              <input type="text" placeholder="Phone Number" value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full p-2 border rounded text-xs" required />
+              <input type="email" placeholder="Email (Optional)" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full p-2 border rounded text-xs" />
+            </div>
             <div className="flex justify-end space-x-2">
-              <button type="button" onClick={() => setIsAdding(false)} className="px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 rounded">Cancel</button>
-              <button type="submit" className="px-3 py-1 text-xs font-medium bg-primary text-white hover:bg-blue-800 rounded">Save Vendor</button>
+              <button type="button" onClick={() => setIsAdding(false)} disabled={isSubmitting} className="px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 rounded">Cancel</button>
+              <button type="submit" disabled={isSubmitting} className="px-3 py-1 text-xs font-medium bg-primary text-white hover:bg-blue-800 rounded disabled:opacity-50">
+                {isSubmitting ? "Saving..." : "Save Vendor"}
+              </button>
             </div>
           </form>
         )}
@@ -92,33 +124,38 @@ export function VendorDirectory() {
         </div>
 
         <div className="space-y-3 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '300px' }}>
-          {filteredVendors.map((vendor) => (
-            <div key={vendor.id} className="p-3 border border-slate-100 rounded-lg hover:border-blue-200 hover:shadow-sm transition-all group">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-semibold text-slate-800 text-sm group-hover:text-primary transition-colors">{vendor.name}</h4>
-                  <p className="text-xs text-blue-600 font-medium mb-2">{vendor.category}</p>
-                  
-                  <div className="space-y-1">
-                    <div className="flex items-center text-xs text-slate-600">
-                      <Phone className="w-3 h-3 mr-2 text-slate-400" />
-                      {vendor.phone}
-                    </div>
-                    {vendor.email && (
-                      <div className="flex items-center text-xs text-slate-600">
-                        <Mail className="w-3 h-3 mr-2 text-slate-400" />
-                        {vendor.email}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-          {filteredVendors.length === 0 && (
+          {isLoading ? (
+            <div className="text-center py-6 text-sm text-slate-500">Loading vendors...</div>
+          ) : filteredVendors.length === 0 ? (
             <div className="text-center py-6 text-sm text-slate-500">
               No vendors found matching "{searchQuery}"
             </div>
+          ) : (
+            filteredVendors.map((vendor) => (
+              <div key={vendor.id} className="p-3 border border-slate-100 rounded-lg hover:border-blue-200 hover:shadow-sm transition-all group">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-semibold text-slate-800 text-sm group-hover:text-primary transition-colors">{vendor.name}</h4>
+                    <p className="text-xs text-blue-600 font-medium mb-2">{vendor.category}</p>
+                    
+                    <div className="space-y-1">
+                      {vendor.phone && (
+                        <div className="flex items-center text-xs text-slate-600">
+                          <Phone className="w-3 h-3 mr-2 text-slate-400" />
+                          {vendor.phone}
+                        </div>
+                      )}
+                      {vendor.email && (
+                        <div className="flex items-center text-xs text-slate-600">
+                          <Mail className="w-3 h-3 mr-2 text-slate-400" />
+                          {vendor.email}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </CardContent>
