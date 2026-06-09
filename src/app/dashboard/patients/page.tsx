@@ -1,4 +1,5 @@
 import { LogPatientVisitForm } from "@/components/operations/LogPatientVisitForm";
+import { UnfulfilledServicesLog } from "@/components/operations/UnfulfilledServicesLog";
 
 export default function PatientsPage() {
   return (
@@ -8,8 +9,9 @@ export default function PatientsPage() {
         <p className="text-slate-500 mt-1">Record and track daily patient footfall, demographics, and payment types.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <LogPatientVisitForm />
+        <UnfulfilledServicesLog />
       </div>
     </div>
   );

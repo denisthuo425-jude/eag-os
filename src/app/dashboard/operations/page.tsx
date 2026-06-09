@@ -2,7 +2,6 @@ import { AddExpenseForm } from "@/components/financials/AddExpenseForm";
 import { LogSuppliesForm } from "@/components/financials/LogSuppliesForm";
 import { PaymentReminders } from "@/components/operations/PaymentReminders";
 import { VendorDirectory } from "@/components/operations/VendorDirectory";
-import { UnfulfilledServicesLog } from "@/components/operations/UnfulfilledServicesLog";
 
 export default function OperationsPage() {
   return (
@@ -22,11 +21,6 @@ export default function OperationsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-[450px]">
         <PaymentReminders />
         <VendorDirectory />
-      </div>
-
-      {/* Bottom Row: Alerts and Missed Revenue */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <UnfulfilledServicesLog />
       </div>
     </div>
   );

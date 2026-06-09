@@ -36,7 +36,8 @@ export function UnfulfilledServicesLog() {
     const { data, error } = await supabase
       .from('unfulfilled_services')
       .select('*')
-      .order('date_logged', { ascending: false });
+      .order('date_logged', { ascending: false })
+      .limit(10);
 
     if (error) {
       console.error("Error fetching unfulfilled services:", error);
@@ -142,11 +143,31 @@ export function UnfulfilledServicesLog() {
           ) : logs.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">No unfulfilled services logged yet.</p>
           ) : (
-            logs.map((log) => (
+            logs.map((log) => {
+              // Parse notes string: "Name: Joseph | Phone: ... | Notes: text"
+              const parsed: Record<string, string> = {};
+              let rawNotes = log.notes;
+              if (log.notes && log.notes.includes('|')) {
+                const parts = log.notes.split('|').map(s => s.trim());
+                parts.forEach(p => {
+                  const splitIdx = p.indexOf(':');
+                  if (splitIdx > -1) {
+                    const key = p.substring(0, splitIdx).trim();
+                    const value = p.substring(splitIdx + 1).trim();
+                    parsed[key] = value;
+                  } else {
+                    parsed['Raw'] = p;
+                  }
+                });
+              } else if (log.notes) {
+                parsed['Raw'] = log.notes;
+              }
+
+              return (
               <div key={log.id} className="flex flex-col p-3 bg-white border border-red-100 rounded-lg shadow-sm hover:border-red-300 transition-colors">
                 <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <span className="inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs font-semibold rounded-full mb-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-block px-2 py-0.5 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
                       {log.service_requested}
                     </span>
                     <p className="text-xs text-slate-500 font-medium">{log.date_logged}</p>
@@ -155,13 +176,24 @@ export function UnfulfilledServicesLog() {
                     {log.reason}
                   </span>
                 </div>
-                {log.notes && (
-                  <div className="mt-1 pt-2 border-t border-slate-100">
-                    <p className="text-xs text-slate-600">{log.notes}</p>
+                
+                {Object.keys(parsed).length > 0 && (
+                  <div className="mt-1 pt-2 border-t border-slate-100 grid grid-cols-2 gap-x-4 gap-y-1">
+                    {Object.entries(parsed).map(([k, v]) => {
+                       if (!v || v.toLowerCase() === 'n/a' || v.trim() === '') return null;
+                       if (k === 'Raw') {
+                         return <div key={k} className="col-span-2 text-xs text-slate-600">{v}</div>;
+                       }
+                       return (
+                         <div key={k} className="text-xs truncate" title={v}>
+                           <span className="font-semibold text-slate-500">{k}:</span> <span className="text-slate-700">{v}</span>
+                         </div>
+                       );
+                    })}
                   </div>
                 )}
               </div>
-            ))
+            )})
           )}
         </div>
       </CardContent>
