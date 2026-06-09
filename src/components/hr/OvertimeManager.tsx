@@ -75,13 +75,18 @@ export function OvertimeManager() {
       return;
     }
 
-    const payloads = selectedIds.map(id => ({
-      date_worked: dateWorked,
-      staff_id: id,
-      hours_worked: parseFloat(hoursWorked),
-      description: rate ? `Rate applied: ${rate}` : "Bulk logged overtime",
-      status: "Logged"
-    }));
+    const payloads = selectedIds.map(id => {
+      const staffMember = staffList.find(s => s.id === id);
+      return {
+        date_worked: dateWorked,
+        staff_id: id,
+        staff_name: staffMember ? `${staffMember.first_name} ${staffMember.last_name}` : "Unknown",
+        hours_worked: parseFloat(hoursWorked),
+        description: rate ? `Rate applied: ${rate}` : "Bulk logged overtime",
+        status: "Logged",
+        date_logged: new Date().toISOString()
+      };
+    });
 
     const { data, error } = await supabase
       .from('overtime_logs')
@@ -182,7 +187,7 @@ export function OvertimeManager() {
                 <tr key={log.id} className="border-b hover:bg-slate-50">
                   <td className="px-4 py-3 text-slate-600">{log.date_worked}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {log.staff ? `${log.staff.first_name} ${log.staff.last_name}` : "Unknown"}
+                    {(log as any).staff_name || (log.staff ? `${log.staff.first_name} ${log.staff.last_name}` : "Unknown")}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-slate-900">{log.hours_worked}</td>
                   <td className="px-4 py-3 text-slate-600">{log.description || "-"}</td>

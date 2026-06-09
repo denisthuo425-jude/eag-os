@@ -7,30 +7,37 @@ import { supabase } from "@/lib/supabase";
 
 type Demographic = "Adult" | "Pediatric";
 type PaymentType = "Cash" | "Insurance" | "Corporate";
+type Gender = "Male" | "Female";
 
 interface PatientVisit {
   id: string;
   visit_date: string;
   demographic: Demographic;
   payment_type: PaymentType;
+  age: number;
+  gender: Gender;
 }
 
 export function LogPatientVisitForm() {
   const [visitDate, setVisitDate] = useState("");
   const [demographic, setDemographic] = useState<Demographic>("Adult");
   const [paymentType, setPaymentType] = useState<PaymentType>("Cash");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState<Gender>("Male");
   const [loading, setLoading] = useState(false);
   const [visits, setVisits] = useState<PatientVisit[]>([]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!visitDate || !demographic || !paymentType) return;
+    if (!visitDate || !demographic || !paymentType || !age) return;
     setLoading(true);
 
     const payload = {
       visit_date: visitDate,
       demographic,
-      payment_type: paymentType
+      payment_type: paymentType,
+      age: Number(age),
+      gender
     };
 
     const { data, error } = await supabase
@@ -46,6 +53,8 @@ export function LogPatientVisitForm() {
       setVisitDate("");
       setDemographic("Adult");
       setPaymentType("Cash");
+      setAge("");
+      setGender("Male");
     }
     setLoading(false);
   };
@@ -57,10 +66,21 @@ export function LogPatientVisitForm() {
         <CardDescription>Record new patient visits to track demographics and payment types.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <div>
+        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8 bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <div className="col-span-1 md:col-span-2">
             <label className="block text-xs font-medium text-slate-700 mb-1">Date</label>
             <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Age</label>
+            <input type="number" value={age} onChange={e => setAge(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Gender</label>
+            <select value={gender} onChange={e => setGender(e.target.value as Gender)} className="w-full text-sm p-2 border rounded bg-white">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Demographic</label>
@@ -77,8 +97,8 @@ export function LogPatientVisitForm() {
               <option value="Corporate">Corporate</option>
             </select>
           </div>
-          <div className="flex items-end">
-            <button type="submit" disabled={loading} className="w-full flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors disabled:opacity-50">
+          <div className="col-span-1 md:col-span-6 flex justify-end">
+            <button type="submit" disabled={loading} className="w-48 flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors disabled:opacity-50">
               <UserPlus className="w-4 h-4 mr-1" /> Log Visit
             </button>
           </div>

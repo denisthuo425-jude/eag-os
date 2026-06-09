@@ -13,7 +13,9 @@ interface LeaveRequest {
   start_date: string;
   end_date: string;
   staff_id: string;
+  staff_name?: string;
   leave_type: LeaveType;
+  status?: string;
   notes: string;
   staff?: Staff; // Joined data
 }
@@ -167,7 +169,7 @@ export function LeaveManager() {
               ) : requests.map(req => (
                 <tr key={req.id} className="border-b hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {req.staff ? `${req.staff.first_name} ${req.staff.last_name}` : "Unknown"}
+                    {req.staff_name || (req.staff ? `${req.staff.first_name} ${req.staff.last_name}` : "Unknown")}
                   </td>
                   <td className="px-4 py-3">
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{req.leave_type}</span>

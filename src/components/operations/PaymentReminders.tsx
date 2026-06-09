@@ -38,7 +38,8 @@ export function PaymentReminders() {
         amount: Number(amount),
         category: 'Facility Bills',
         description: `Paid Reminder: ${title}`,
-        logged_by_name: 'Admin'
+        logged_by_name: 'Admin',
+        date_logged: new Date().toISOString().split('T')[0]
       };
       
       const { error: expError } = await supabase.from('expenses').insert([expensePayload]);
