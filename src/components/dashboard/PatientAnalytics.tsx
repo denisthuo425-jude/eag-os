@@ -105,18 +105,18 @@ export function PatientAnalytics() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
       {/* Patient Volume Trend (Deep Blue/Slate) */}
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2 border-b border-slate-100 bg-slate-50/50 rounded-t-lg">
           <CardTitle className="text-lg text-slate-800">Weekly Patient Footfall</CardTitle>
           <CardDescription>7-day rolling trend of successful visits.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 h-72">
+        <CardContent className="pt-6">
           {visitsData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-sm text-slate-500">No visit data available.</div>
+            <div className="h-72 flex items-center justify-center text-sm text-slate-500">No visit data available.</div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart data={visitsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis 
@@ -152,11 +152,11 @@ export function PatientAnalytics() {
           <CardTitle className="text-lg text-red-900">Missed Revenue Distribution</CardTitle>
           <CardDescription className="text-red-700/80">Primary reasons for patient turnaways.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 h-72">
+        <CardContent className="pt-6">
           {unfulfilledData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-sm text-slate-500">No turnaway data available.</div>
+            <div className="h-72 flex items-center justify-center text-sm text-slate-500">No turnaway data available.</div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={unfulfilledData}
