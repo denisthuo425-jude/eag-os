@@ -2,125 +2,113 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { UserPlus } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-type Demographic = "Adult" | "Pediatric";
-type PaymentType = "Cash" | "Insurance" | "Corporate";
-type Gender = "Male" | "Female";
-
-interface PatientVisit {
-  id: string;
-  visit_date: string;
-  demographic: Demographic;
-  payment_type: PaymentType;
-  age: number;
-  gender: Gender;
-}
-
 export function LogPatientVisitForm() {
-  const [formDate, setFormDate] = useState("");
-  const [formDemographic, setFormDemographic] = useState<Demographic>("Adult");
-  const [formPaymentType, setFormPaymentType] = useState<PaymentType>("Cash");
-  const [formAge, setFormAge] = useState("");
-  const [formGender, setFormGender] = useState<Gender>("Male");
-  const [loading, setLoading] = useState(false);
-  const [visits, setVisits] = useState<PatientVisit[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("Female");
+  const [demographic, setDemographic] = useState("Adult");
+  const [paymentType, setPaymentType] = useState("Cash/M-Pesa");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formDate || !formDemographic || !formPaymentType || !formAge) return;
-    setLoading(true);
+    setIsSubmitting(true);
 
-    const payload = {
-      visit_date: formDate,
-      age: Number(formAge),
-      gender: formGender,
-      demographic: formDemographic,
-      payment_type: formPaymentType
-    };
+    try {
+      const payload = {
+        visit_date: visitDate,
+        age: Number(age),
+        gender: gender,
+        demographic: demographic,
+        payment_type: paymentType,
+      };
 
-    console.log("PAYLOAD:", payload);
 
-    const { data, error } = await supabase
-      .from('patient_visits')
-      .insert([payload])
-      .select();
+      const { error } = await supabase
+        .from('patient_visits')
+        .insert([payload]);
 
-    if (error) {
-      console.error("Error logging visit:", error);
-      alert("Error saving visit: " + error.message);
-    } else if (data) {
-      setVisits([data[0] as PatientVisit, ...visits]);
-      setFormDate("");
-      setFormDemographic("Adult");
-      setFormPaymentType("Cash");
-      setFormAge("");
-      setFormGender("Male");
+      if (error) throw error;
+
+      setAge("");
+      alert("Patient visit logged successfully!");
+
+    } catch (error: any) {
+      alert("DATABASE REJECTED LOG: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
-    setLoading(false);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Log Patient Visit</CardTitle>
-        <CardDescription>Record new patient visits to track demographics and payment types.</CardDescription>
+        <CardTitle className="flex items-center space-x-2">
+          <Users className="w-5 h-5 text-primary" />
+          <span>Log Patient Visit</span>
+        </CardTitle>
+        <CardDescription>Record daily patient demographics for the executive dashboard.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-xs font-medium text-slate-700 mb-1">Date</label>
-            <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Visit Date</label>
+              <input
+                type="date"
+                value={visitDate}
+                onChange={e => setVisitDate(e.target.value)}
+                required
+                className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-primary focus:border-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Age</label>
+              <input
+                type="number"
+                value={age}
+                onChange={e => setAge(e.target.value)}
+                required
+                placeholder="e.g., 50"
+                className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-primary focus:border-primary"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Age</label>
-            <input type="number" value={formAge} onChange={e => setFormAge(e.target.value)} className="w-full text-sm p-2 border rounded" required />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Gender</label>
-            <select value={formGender} onChange={e => setFormGender(e.target.value as Gender)} className="w-full text-sm p-2 border rounded bg-white">
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Demographic</label>
-            <select value={formDemographic} onChange={e => setFormDemographic(e.target.value as Demographic)} className="w-full text-sm p-2 border rounded bg-white">
-              <option value="Adult">Adult</option>
-              <option value="Pediatric">Pediatric</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Payment Type</label>
-            <select value={formPaymentType} onChange={e => setFormPaymentType(e.target.value as PaymentType)} className="w-full text-sm p-2 border rounded bg-white">
-              <option value="Cash">Cash</option>
-              <option value="Insurance">Insurance</option>
-              <option value="Corporate">Corporate</option>
-            </select>
-          </div>
-          <div className="col-span-1 md:col-span-6 flex justify-end">
-            <button type="submit" disabled={loading} className="w-48 flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors disabled:opacity-50">
-              <UserPlus className="w-4 h-4 mr-1" /> Log Visit
-            </button>
-          </div>
-        </form>
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-slate-700 border-b pb-2">Recently Logged (Current Session)</h3>
-          {visits.length === 0 ? (
-            <p className="text-xs text-slate-500">No visits logged in this session yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {visits.map(visit => (
-                <li key={visit.id} className="text-sm flex justify-between p-2 bg-slate-50 rounded border border-slate-100">
-                  <span className="text-slate-700">{visit.visit_date}</span>
-                  <span className="font-medium text-slate-900">{visit.demographic} - {visit.payment_type}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Gender</label>
+              <select value={gender} onChange={e => setGender(e.target.value)} className="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-primary focus:border-primary">
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Demographic</label>
+              <select value={demographic} onChange={e => setDemographic(e.target.value)} className="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-primary focus:border-primary">
+                <option value="Adult">Adult</option>
+                <option value="Pediatric">Pediatric</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Payment</label>
+              <select value={paymentType} onChange={e => setPaymentType(e.target.value)} className="w-full p-2 border border-slate-300 rounded text-sm bg-white focus:ring-primary focus:border-primary">
+                <option value="Cash/M-Pesa">Cash/M-Pesa</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Corporate">Corporate</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center p-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors">
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Save Patient Record
+          </button>
+        </form>
       </CardContent>
     </Card>
   );
