@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { HeadachesWidget } from "@/components/dashboard/HeadachesWidget";
-import { PartnershipsCard } from "@/components/dashboard/PartnershipsCard";
+import { PatientInsightsWidget } from "@/components/dashboard/PatientInsightsWidget";
 import { DollarSign, Users, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -74,9 +74,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom Split Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[500px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[600px]">
         <HeadachesWidget />
-        <PartnershipsCard />
+        <PatientInsightsWidget />
       </div>
     </div>
   );

@@ -25,9 +25,10 @@ export function OvertimeManager() {
 
   // Form states
   const [dateWorked, setDateWorked] = useState("");
-  const [staffId, setStaffId] = useState("");
   const [hoursWorked, setHoursWorked] = useState("");
-  const [description, setDescription] = useState("");
+  const [rate, setRate] = useState("");
+  const [checkedStaff, setCheckedStaff] = useState<Record<string, boolean>>({});
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -40,6 +41,9 @@ export function OvertimeManager() {
       
     if (staffData) {
       setStaffList(staffData as Staff[]);
+      const initialChecked: Record<string, boolean> = {};
+      staffData.forEach(s => { initialChecked[s.id] = true; });
+      setCheckedStaff(initialChecked);
     }
 
     // Fetch overtime logs
@@ -63,29 +67,41 @@ export function OvertimeManager() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dateWorked || !staffId || !hoursWorked) return;
+    if (!dateWorked || !hoursWorked) return;
+
+    const selectedIds = Object.keys(checkedStaff).filter(id => checkedStaff[id]);
+    if (selectedIds.length === 0) {
+      alert("Please select at least one staff member.");
+      return;
+    }
+
+    const payloads = selectedIds.map(id => ({
+      date_worked: dateWorked,
+      staff_id: id,
+      hours_worked: parseFloat(hoursWorked),
+      description: rate ? `Rate applied: ${rate}` : "Bulk logged overtime",
+      status: "Logged"
+    }));
 
     const { data, error } = await supabase
       .from('overtime_logs')
-      .insert([
-        {
-          date_worked: dateWorked,
-          staff_id: staffId,
-          hours_worked: parseFloat(hoursWorked),
-          description,
-          status: "Logged"
-        }
-      ])
+      .insert(payloads)
       .select('*, staff(*)');
 
     if (error) {
       console.error("Error adding overtime log:", error);
+      alert("Error adding overtime: " + error.message);
     } else if (data) {
-      setLogs([data[0] as OvertimeLog, ...logs]);
+      // Data is an array of inserted records
+      setLogs([...(data as OvertimeLog[]), ...logs]);
       setDateWorked("");
-      setStaffId("");
       setHoursWorked("");
-      setDescription("");
+      setRate("");
+      
+      // Reset checkboxes to all true
+      const initialChecked: Record<string, boolean> = {};
+      staffList.forEach(s => { initialChecked[s.id] = true; });
+      setCheckedStaff(initialChecked);
     }
   };
 
@@ -104,33 +120,44 @@ export function OvertimeManager() {
         </button>
       </CardHeader>
       <CardContent>
-        {/* Add Entry Form */}
-        <form onSubmit={handleAdd} className="print:hidden grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <div className="col-span-1">
-            <label className="block text-xs font-medium text-slate-700 mb-1">Date Worked</label>
-            <input type="date" value={dateWorked} onChange={e => setDateWorked(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+        {/* Bulk Log Form */}
+        <form onSubmit={handleAdd} className="print:hidden mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Date Worked</label>
+              <input type="date" value={dateWorked} onChange={e => setDateWorked(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Hours Worked</label>
+              <input type="number" step="0.5" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} className="w-full text-sm p-2 border rounded" placeholder="e.g. 4.5" required />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Rate (Optional)</label>
+              <input type="text" value={rate} onChange={e => setRate(e.target.value)} className="w-full text-sm p-2 border rounded" placeholder="e.g. KES 1000/hr" />
+            </div>
+            <div className="flex items-end">
+              <button type="submit" className="w-full flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors">
+                <Plus className="w-4 h-4 mr-1" /> Bulk Log Overtime
+              </button>
+            </div>
           </div>
-          <div className="col-span-1">
-            <label className="block text-xs font-medium text-slate-700 mb-1">Staff Member</label>
-            <select value={staffId} onChange={e => setStaffId(e.target.value)} className="w-full text-sm p-2 border rounded bg-white" required>
-              <option value="" disabled>Select Staff</option>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-2 border-b pb-1">Staff Present (Uncheck if absent)</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 bg-white border rounded">
               {staffList.map(s => (
-                <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.department})</option>
+                <label key={s.id} className="flex items-center space-x-2 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded">
+                  <input 
+                    type="checkbox" 
+                    checked={checkedStaff[s.id] || false}
+                    onChange={(e) => setCheckedStaff({...checkedStaff, [s.id]: e.target.checked})}
+                    className="rounded border-slate-300 text-primary focus:ring-primary"
+                  />
+                  <span className="truncate">{s.first_name} {s.last_name}</span>
+                </label>
               ))}
-            </select>
-          </div>
-          <div className="col-span-1">
-            <label className="block text-xs font-medium text-slate-700 mb-1">Hours Worked</label>
-            <input type="number" step="0.5" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} className="w-full text-sm p-2 border rounded" placeholder="0" required />
-          </div>
-          <div className="col-span-1">
-            <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
-            <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full text-sm p-2 border rounded" placeholder="Reason..." />
-          </div>
-          <div className="col-span-1 flex items-end">
-            <button type="submit" className="w-full flex items-center justify-center p-2 bg-primary text-white rounded hover:bg-blue-800 transition-colors">
-              <Plus className="w-4 h-4 mr-1" /> Log Overtime
-            </button>
+              {staffList.length === 0 && <span className="text-xs text-slate-500">No staff available.</span>}
+            </div>
           </div>
         </form>
 

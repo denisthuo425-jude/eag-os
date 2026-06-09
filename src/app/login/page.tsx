@@ -21,11 +21,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      
+
       {/* Subtle Background Effects */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-500/5 rounded-full blur-[100px] pointer-events-none"></div>
-      
+
       {/* Brand Header */}
       <div className="absolute top-8 left-8 flex items-center space-x-3">
         <div className="w-10 h-10 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center">
@@ -37,17 +37,17 @@ export default function LoginPage() {
       </div>
 
       <div className="max-w-md w-full relative z-10">
-        
+
         {/* Card */}
         <div className="bg-slate-900/80 backdrop-blur-xl p-10 rounded-3xl border border-slate-800 shadow-2xl">
-          
+
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-semibold text-white tracking-tight mb-2">Mission Control</h1>
+            <h1 className="text-3xl font-semibold text-white tracking-tight mb-2">Facility Management Gateway</h1>
             <p className="text-sm text-slate-400">Authenticate to access the ERP</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
-            
+
             <div className="space-y-2">
               <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Email Address</label>
               <div className="relative">
@@ -91,7 +91,7 @@ export default function LoginPage() {
               {!isAuthenticating && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
-          
+
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-8 font-mono">
