@@ -13,7 +13,7 @@ interface OvertimeLog {
   date_logged?: string;
   staff_id: string;
   staff_name?: string;
-  hours?: number;
+  hours_worked?: number;
   rate?: string;
   description: string;
   status: OvertimeStatus;
@@ -82,7 +82,7 @@ export function OvertimeManager() {
         date_logged: dateWorked, // Assuming the db schema uses date_logged for the date worked
         staff_id: id,
         staff_name: staffMember ? `${staffMember.first_name} ${staffMember.last_name}` : "Unknown",
-        hours: parseFloat(hoursWorked),
+        hours_worked: parseFloat(hoursWorked),
         rate: rate || "N/A",
         description: rate ? `Rate applied: ${rate}` : "Bulk logged overtime",
         status: "Logged"
@@ -190,7 +190,7 @@ export function OvertimeManager() {
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {log.staff_name}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-slate-900">{log.hours}</td>
+                  <td className="px-4 py-3 text-right font-medium text-slate-900">{log.hours_worked}</td>
                   <td className="px-4 py-3 text-slate-600">{log.rate}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-1 rounded-full ${

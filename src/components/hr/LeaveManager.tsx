@@ -48,7 +48,7 @@ export function LeaveManager() {
     // Fetch leave requests
     const { data: reqData, error } = await supabase
       .from('leave_requests')
-      .select('*, staff(*)')
+      .select('*')
       .order('start_date', { ascending: false });
 
     if (error) {

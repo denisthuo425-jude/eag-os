@@ -40,6 +40,8 @@ export function LogPatientVisitForm() {
       payment_type: formPaymentType
     };
 
+    console.log("PAYLOAD:", payload);
+
     const { data, error } = await supabase
       .from('patient_visits')
       .insert([payload])
