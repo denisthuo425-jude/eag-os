@@ -10,12 +10,13 @@ type OvertimeStatus = "Logged" | "Approved";
 
 interface OvertimeLog {
   id: string;
-  date_worked: string;
+  date_logged?: string;
   staff_id: string;
-  hours_worked: number;
+  staff_name?: string;
+  hours?: number;
+  rate?: string;
   description: string;
   status: OvertimeStatus;
-  staff?: Staff; // Joined data
 }
 
 export function OvertimeManager() {
@@ -49,8 +50,8 @@ export function OvertimeManager() {
     // Fetch overtime logs
     const { data: logData, error } = await supabase
       .from('overtime_logs')
-      .select('*, staff(*)')
-      .order('date_worked', { ascending: false });
+      .select('*')
+      .order('date_logged', { ascending: false });
 
     if (error) {
       console.error("Error fetching overtime logs:", error);
@@ -78,13 +79,13 @@ export function OvertimeManager() {
     const payloads = selectedIds.map(id => {
       const staffMember = staffList.find(s => s.id === id);
       return {
-        date_worked: dateWorked,
+        date_logged: dateWorked, // Assuming the db schema uses date_logged for the date worked
         staff_id: id,
         staff_name: staffMember ? `${staffMember.first_name} ${staffMember.last_name}` : "Unknown",
-        hours_worked: parseFloat(hoursWorked),
+        hours: parseFloat(hoursWorked),
+        rate: rate || "N/A",
         description: rate ? `Rate applied: ${rate}` : "Bulk logged overtime",
-        status: "Logged",
-        date_logged: new Date().toISOString()
+        status: "Logged"
       };
     });
 
@@ -174,7 +175,7 @@ export function OvertimeManager() {
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Staff Member</th>
                 <th className="px-4 py-3 text-right">Hours</th>
-                <th className="px-4 py-3">Description</th>
+                <th className="px-4 py-3">Rate</th>
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
@@ -185,12 +186,12 @@ export function OvertimeManager() {
                 </tr>
               ) : logs.map(log => (
                 <tr key={log.id} className="border-b hover:bg-slate-50">
-                  <td className="px-4 py-3 text-slate-600">{log.date_worked}</td>
+                  <td className="px-4 py-3 text-slate-600">{log.date_logged}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {(log as any).staff_name || (log.staff ? `${log.staff.first_name} ${log.staff.last_name}` : "Unknown")}
+                    {log.staff_name}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-slate-900">{log.hours_worked}</td>
-                  <td className="px-4 py-3 text-slate-600">{log.description || "-"}</td>
+                  <td className="px-4 py-3 text-right font-medium text-slate-900">{log.hours}</td>
+                  <td className="px-4 py-3 text-slate-600">{log.rate}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       log.status === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'

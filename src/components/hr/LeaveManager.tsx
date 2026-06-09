@@ -158,31 +158,37 @@ export function LeaveManager() {
                 <th className="px-4 py-3">Staff Member</th>
                 <th className="px-4 py-3">Leave Type</th>
                 <th className="px-4 py-3">Duration</th>
+                <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Notes</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">Loading leave requests...</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">Loading leave requests...</td>
                 </tr>
-              ) : requests.map(req => (
-                <tr key={req.id} className="border-b hover:bg-slate-50">
+              ) : requests.map(leave => (
+                <tr key={leave.id} className="border-b hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {req.staff_name || (req.staff ? `${req.staff.first_name} ${req.staff.last_name}` : "Unknown")}
+                    {leave.staff_name}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{req.leave_type}</span>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{leave.leave_type}</span>
                   </td>
                   <td className="px-4 py-3 text-slate-600">
-                    {req.start_date} to {req.end_date}
+                    {leave.start_date} to {leave.end_date}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{req.notes || "-"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full ${leave.status === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {leave.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{leave.notes || "-"}</td>
                 </tr>
               ))}
               {!loading && requests.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No leave requests found.</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No leave requests found.</td>
                 </tr>
               )}
             </tbody>

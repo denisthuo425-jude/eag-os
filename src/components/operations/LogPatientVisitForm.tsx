@@ -19,25 +19,25 @@ interface PatientVisit {
 }
 
 export function LogPatientVisitForm() {
-  const [visitDate, setVisitDate] = useState("");
-  const [demographic, setDemographic] = useState<Demographic>("Adult");
-  const [paymentType, setPaymentType] = useState<PaymentType>("Cash");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState<Gender>("Male");
+  const [formDate, setFormDate] = useState("");
+  const [formDemographic, setFormDemographic] = useState<Demographic>("Adult");
+  const [formPaymentType, setFormPaymentType] = useState<PaymentType>("Cash");
+  const [formAge, setFormAge] = useState("");
+  const [formGender, setFormGender] = useState<Gender>("Male");
   const [loading, setLoading] = useState(false);
   const [visits, setVisits] = useState<PatientVisit[]>([]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!visitDate || !demographic || !paymentType || !age) return;
+    if (!formDate || !formDemographic || !formPaymentType || !formAge) return;
     setLoading(true);
 
     const payload = {
-      visit_date: visitDate,
-      demographic,
-      payment_type: paymentType,
-      age: Number(age),
-      gender
+      visit_date: formDate,
+      age: Number(formAge),
+      gender: formGender,
+      demographic: formDemographic,
+      payment_type: formPaymentType
     };
 
     const { data, error } = await supabase
@@ -50,11 +50,11 @@ export function LogPatientVisitForm() {
       alert("Error saving visit: " + error.message);
     } else if (data) {
       setVisits([data[0] as PatientVisit, ...visits]);
-      setVisitDate("");
-      setDemographic("Adult");
-      setPaymentType("Cash");
-      setAge("");
-      setGender("Male");
+      setFormDate("");
+      setFormDemographic("Adult");
+      setFormPaymentType("Cash");
+      setFormAge("");
+      setFormGender("Male");
     }
     setLoading(false);
   };
@@ -69,29 +69,29 @@ export function LogPatientVisitForm() {
         <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8 bg-slate-50 p-4 rounded-lg border border-slate-200">
           <div className="col-span-1 md:col-span-2">
             <label className="block text-xs font-medium text-slate-700 mb-1">Date</label>
-            <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+            <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className="w-full text-sm p-2 border rounded" required />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Age</label>
-            <input type="number" value={age} onChange={e => setAge(e.target.value)} className="w-full text-sm p-2 border rounded" required />
+            <input type="number" value={formAge} onChange={e => setFormAge(e.target.value)} className="w-full text-sm p-2 border rounded" required />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Gender</label>
-            <select value={gender} onChange={e => setGender(e.target.value as Gender)} className="w-full text-sm p-2 border rounded bg-white">
+            <select value={formGender} onChange={e => setFormGender(e.target.value as Gender)} className="w-full text-sm p-2 border rounded bg-white">
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Demographic</label>
-            <select value={demographic} onChange={e => setDemographic(e.target.value as Demographic)} className="w-full text-sm p-2 border rounded bg-white">
+            <select value={formDemographic} onChange={e => setFormDemographic(e.target.value as Demographic)} className="w-full text-sm p-2 border rounded bg-white">
               <option value="Adult">Adult</option>
               <option value="Pediatric">Pediatric</option>
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Payment Type</label>
-            <select value={paymentType} onChange={e => setPaymentType(e.target.value as PaymentType)} className="w-full text-sm p-2 border rounded bg-white">
+            <select value={formPaymentType} onChange={e => setFormPaymentType(e.target.value as PaymentType)} className="w-full text-sm p-2 border rounded bg-white">
               <option value="Cash">Cash</option>
               <option value="Insurance">Insurance</option>
               <option value="Corporate">Corporate</option>
