@@ -86,7 +86,7 @@ export function OvertimeManager() {
     const { data, error } = await supabase
       .from('overtime_logs')
       .insert(payloads)
-      .select('*, staff(*)');
+      .select();
 
     if (error) {
       console.error("Error adding overtime log:", error);

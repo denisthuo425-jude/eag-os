@@ -66,6 +66,8 @@ export function LeaveManager() {
     e.preventDefault();
     if (!startDate || !endDate || !staffId) return;
 
+    const staffMember = staffList.find(s => s.id === staffId);
+    
     const { data, error } = await supabase
       .from('leave_requests')
       .insert([
@@ -73,11 +75,13 @@ export function LeaveManager() {
           start_date: startDate,
           end_date: endDate,
           staff_id: staffId,
+          staff_name: staffMember ? `${staffMember.first_name} ${staffMember.last_name}` : "Unknown",
           leave_type: leaveType,
+          status: "Pending",
           notes
         }
       ])
-      .select('*, staff(*)');
+      .select();
 
     if (error) {
       console.error("Error adding leave request:", error);

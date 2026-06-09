@@ -6,7 +6,7 @@ const navItems = [
   { name: "Financials", href: "/dashboard/financials", icon: DollarSign },
   { name: "HR & Locum", href: "/dashboard/hr", icon: Users },
   { name: "Operations", href: "/dashboard/operations", icon: ShieldAlert },
-  { name: "Partnerships", href: "/dashboard/partnerships", icon: FileText },
+  { name: "Patient Logs", href: "/dashboard/patients", icon: FileText },
 ];
 
 export function Sidebar() {
