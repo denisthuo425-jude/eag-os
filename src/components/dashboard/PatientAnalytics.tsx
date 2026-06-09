@@ -116,7 +116,7 @@ export function PatientAnalytics() {
           {visitsData.length === 0 ? (
             <div className="h-72 flex items-center justify-center text-sm text-slate-500">No visit data available.</div>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={380}>
               <BarChart data={visitsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis 
@@ -156,12 +156,12 @@ export function PatientAnalytics() {
           {unfulfilledData.length === 0 ? (
             <div className="h-72 flex items-center justify-center text-sm text-slate-500">No turnaway data available.</div>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={380}>
               <PieChart>
                 <Pie
                   data={unfulfilledData}
                   cx="50%"
-                  cy="45%"
+                  cy="40%"
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={2}
@@ -178,7 +178,7 @@ export function PatientAnalytics() {
                 />
                 <Legend 
                   verticalAlign="bottom" 
-                  height={36}
+                  wrapperStyle={{ paddingTop: '20px' }}
                   iconType="circle"
                   formatter={(value) => <span className="text-xs text-slate-700 font-medium ml-1">{value}</span>}
                 />
