@@ -5,9 +5,11 @@ import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 interface FinancialSummaryProps {
   grossRevenue: number;
   totalExpenses: number;
+  revPct: number;
+  expPct: number;
 }
 
-export function FinancialSummary({ grossRevenue, totalExpenses }: FinancialSummaryProps) {
+export function FinancialSummary({ grossRevenue, totalExpenses, revPct, expPct }: FinancialSummaryProps) {
   const netProfit = grossRevenue - totalExpenses;
   const isProfitable = netProfit >= 0;
 
@@ -22,7 +24,12 @@ export function FinancialSummary({ grossRevenue, totalExpenses }: FinancialSumma
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-slate-800">{formatCurrency(grossRevenue)}</div>
-          <p className="text-xs text-slate-400 mt-1">+12% from last month</p>
+          <div className="flex items-center mt-1">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded ${revPct >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {revPct >= 0 ? '+' : ''}{revPct.toFixed(1)}%
+            </span>
+            <p className="text-xs text-slate-400 ml-2">from last month</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -35,7 +42,12 @@ export function FinancialSummary({ grossRevenue, totalExpenses }: FinancialSumma
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-slate-800">{formatCurrency(totalExpenses)}</div>
-          <p className="text-xs text-slate-400 mt-1">+4% from last month</p>
+          <div className="flex items-center mt-1">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded ${expPct <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {expPct > 0 ? '+' : ''}{expPct.toFixed(1)}%
+            </span>
+            <p className="text-xs text-slate-400 ml-2">from last month</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -50,7 +62,17 @@ export function FinancialSummary({ grossRevenue, totalExpenses }: FinancialSumma
           <div className={`text-3xl font-bold ${isProfitable ? 'text-success' : 'text-danger'}`}>
             {formatCurrency(netProfit)}
           </div>
-          <p className="text-xs text-slate-400 mt-1">{isProfitable ? 'On track' : 'Needs attention'}</p>
+          <div className="flex items-center mt-1">
+            {isProfitable ? (
+              <span className="flex items-center text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                <TrendingUp className="w-3 h-3 mr-1" /> On track
+              </span>
+            ) : (
+              <span className="flex items-center text-xs font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded">
+                <TrendingDown className="w-3 h-3 mr-1" /> Needs attention
+              </span>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
