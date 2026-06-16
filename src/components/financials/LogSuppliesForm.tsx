@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
 
 const DEPARTMENTS = [
   "Pharmacy",
@@ -29,28 +30,36 @@ export function LogSuppliesForm() {
 
     setIsSubmitting(true);
 
+    // 1. The Corrected Payload Mapping
+    const payload = {
+      date_logged: date,            // Fixed to match database column
+      department: department,
+      amount: Number(amount),
+      grn_number: grnNumber,
+      logged_by_name: 'Admin'       // Added the audit trail tag
+    };
+
     const { error } = await supabase
       .from("departmental_supplies")
-      .insert([
-        {
-          date: date,
-          department: department,
-          amount: Number(amount),
-          grn_number: grnNumber,
-        }
-      ]);
+      .insert([payload]);
 
     setIsSubmitting(false);
 
     if (error) {
+      toast.error("Database Error: " + error.message);
       console.error("Error logging supplies:", error);
-    } else {
-      setDate("");
-      setDepartment(DEPARTMENTS[0]);
-      setAmount("");
-      setGrnNumber("");
-      router.refresh();
+      return;
     }
+
+    // 2. Clear inputs and show success notification
+    toast.success("Supplies Logged Successfully");
+    setDate("");
+    setDepartment(DEPARTMENTS[0]);
+    setAmount("");
+    setGrnNumber("");
+
+    // Instantly refresh the server data so the P&L updates
+    router.refresh();
   };
 
   return (

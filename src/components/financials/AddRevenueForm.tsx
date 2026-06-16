@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
 
 const SOURCES = [
   "M-Pesa / Cash",
@@ -27,29 +28,35 @@ export function AddRevenueForm() {
 
     setIsSubmitting(true);
 
+    // 1. Define the payload EXACTLY matching your Supabase columns
+    const payload = {
+      date_logged: date, // <-- Notice this change to match the database!
+      source: source,
+      amount: Number(amount),
+      reference_number: referenceNumber,
+      logged_by_name: 'Admin'
+    };
+
+    // 3. The exact Supabase insertion
     const { error } = await supabase
       .from("clinic_revenue")
-      .insert([
-        {
-          date: date,
-          source: source,
-          amount: Number(amount),
-          reference_number: referenceNumber,
-          logged_by_name: 'Admin'
-        }
-      ]);
+      .insert([payload]);
 
     setIsSubmitting(false);
 
+    // 4. The Rejection Alarm
     if (error) {
+      toast.error("Database Error: " + error.message);
       console.error("Error adding revenue:", error);
-    } else {
-      setDate("");
-      setSource(SOURCES[0]);
-      setAmount("");
-      setReferenceNumber("");
-      router.refresh();
+      return;
     }
+
+    toast.success("Revenue Logged Successfully");
+    setDate("");
+    setSource(SOURCES[0]);
+    setAmount("");
+    setReferenceNumber("");
+    router.refresh();
   };
 
   return (
