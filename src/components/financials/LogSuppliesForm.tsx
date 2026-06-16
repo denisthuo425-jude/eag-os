@@ -35,7 +35,7 @@ export function LogSuppliesForm() {
         {
           date: date,
           department: department,
-          amount: parseFloat(amount),
+          amount: Number(amount),
           grn_number: grnNumber,
         }
       ]);

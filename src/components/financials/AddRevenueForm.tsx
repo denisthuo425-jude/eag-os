@@ -28,12 +28,12 @@ export function AddRevenueForm() {
     setIsSubmitting(true);
 
     const { error } = await supabase
-      .from("revenue")
+      .from("clinic_revenue")
       .insert([
         {
           date: date,
           source: source,
-          amount: parseFloat(amount),
+          amount: Number(amount),
           reference_number: referenceNumber,
           logged_by_name: 'Admin'
         }

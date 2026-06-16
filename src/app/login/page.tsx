@@ -36,10 +36,10 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="max-w-md w-full relative z-10">
+      <div className="max-w-md w-full relative z-10 mx-auto">
 
         {/* Card */}
-        <div className="bg-slate-900/80 backdrop-blur-xl p-10 rounded-3xl border border-slate-800 shadow-2xl">
+        <div className="bg-slate-900/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl">
 
           <div className="text-center mb-10">
             <h1 className="text-3xl font-semibold text-white tracking-tight mb-2">Facility Management Gateway</h1>

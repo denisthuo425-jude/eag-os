@@ -137,7 +137,7 @@ export function UnfulfilledServicesLog() {
           </form>
         )}
 
-        <div className="space-y-3 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '300px' }}>
+        <div className="space-y-3 overflow-y-auto overflow-x-auto flex-1 pr-1" style={{ maxHeight: '300px' }}>
           {isLoading ? (
             <p className="text-sm text-slate-500 animate-pulse text-center py-4">Loading logs...</p>
           ) : logs.length === 0 ? (

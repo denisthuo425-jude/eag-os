@@ -125,7 +125,7 @@ export function VendorDirectory() {
           />
         </div>
 
-        <div className="space-y-3 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '300px' }}>
+        <div className="space-y-3 overflow-y-auto overflow-x-auto flex-1 pr-1" style={{ maxHeight: '300px' }}>
           {isLoading ? (
             <p className="text-center py-6 text-sm text-slate-500 animate-pulse">Loading vendors...</p>
           ) : filteredVendors.length === 0 ? (
