@@ -4,6 +4,17 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Users, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
+
+interface PatientVisitPayload {
+  visit_date: string;
+  age: number;
+  gender: string;
+  demographic: string;
+  payment_type: string;
+  diagnosis?: string;
+  diagnostic_report_url?: string;
+}
 
 export function LogPatientVisitForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,13 +24,40 @@ export function LogPatientVisitForm() {
   const [gender, setGender] = useState("Female");
   const [demographic, setDemographic] = useState("Adult");
   const [paymentType, setPaymentType] = useState("Cash/M-Pesa");
+  const [diagnosis, setDiagnosis] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      let fileUrl = "";
+
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('hmis_diagnostics')
+          .upload(fileName, file);
+          
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('hmis_diagnostics')
+          .getPublicUrl(fileName);
+          
+        fileUrl = publicUrlData.publicUrl;
+      }
+
+      const payload: PatientVisitPayload = {
         visit_date: visitDate,
         age: Number(age),
         gender: gender,
@@ -27,6 +65,12 @@ export function LogPatientVisitForm() {
         payment_type: paymentType,
       };
 
+      if (diagnosis.trim() !== "") {
+        payload.diagnosis = diagnosis.trim();
+      }
+      if (fileUrl !== "") {
+        payload.diagnostic_report_url = fileUrl;
+      }
 
       const { error } = await supabase
         .from('patient_visits')
@@ -35,10 +79,19 @@ export function LogPatientVisitForm() {
       if (error) throw error;
 
       setAge("");
-      alert("Patient visit logged successfully!");
+      setDiagnosis("");
+      setFile(null);
+      const fileInput = document.getElementById("diagnostic-file") as HTMLInputElement | null;
+      if (fileInput) fileInput.value = "";
+      
+      toast.success("Patient visit logged successfully!");
 
-    } catch (error: any) {
-      alert("DATABASE REJECTED LOG: " + error.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error("DATABASE REJECTED LOG: " + err.message);
+      } else {
+        toast.error("DATABASE REJECTED LOG: Unknown error");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -51,7 +104,7 @@ export function LogPatientVisitForm() {
           <Users className="w-5 h-5 text-primary" />
           <span>Log Patient Visit</span>
         </CardTitle>
-        <CardDescription>Record daily patient demographics for the executive dashboard.</CardDescription>
+        <CardDescription>Record daily patient demographics and diagnostics.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,6 +155,28 @@ export function LogPatientVisitForm() {
                 <option value="Corporate">Corporate</option>
               </select>
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700">Primary Diagnosis</label>
+            <input
+              type="text"
+              value={diagnosis}
+              onChange={e => setDiagnosis(e.target.value)}
+              placeholder="e.g., Malaria, Upper Respiratory Tract Infection"
+              className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-primary focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700">Diagnostic Report (PDF only)</label>
+            <input
+              type="file"
+              id="diagnostic-file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-primary focus:border-primary bg-white file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-blue-800"
+            />
           </div>
 
           <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center p-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors">

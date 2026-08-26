@@ -5,9 +5,10 @@ import { LocumTable } from "@/components/hr/LocumTable";
 import { StaffDirectory } from "@/components/hr/StaffDirectory";
 import { OvertimeManager } from "@/components/hr/OvertimeManager";
 import { LeaveManager } from "@/components/hr/LeaveManager";
-import { Users, Clock, CalendarDays, Stethoscope } from "lucide-react";
+import { DutyRoster } from "@/components/hr/DutyRoster";
+import { Users, Clock, CalendarDays, Stethoscope, CalendarRange } from "lucide-react";
 
-type Tab = "staff" | "overtime" | "leave" | "locum";
+type Tab = "staff" | "roster" | "overtime" | "leave" | "locum";
 
 export default function HRPage() {
   const [activeTab, setActiveTab] = useState<Tab>("staff");
@@ -28,6 +29,14 @@ export default function HRPage() {
           }`}
         >
           <Users className="w-4 h-4 mr-2" /> Staff Directory
+        </button>
+        <button
+          onClick={() => setActiveTab("roster")}
+          className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            activeTab === "roster" ? "bg-white text-primary shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+          }`}
+        >
+          <CalendarRange className="w-4 h-4 mr-2" /> Duty Roster
         </button>
         <button
           onClick={() => setActiveTab("overtime")}
@@ -57,6 +66,7 @@ export default function HRPage() {
 
       <div className="grid grid-cols-1 gap-6">
         {activeTab === "staff" && <StaffDirectory />}
+        {activeTab === "roster" && <DutyRoster />}
         {activeTab === "overtime" && <OvertimeManager />}
         {activeTab === "leave" && <LeaveManager />}
         {activeTab === "locum" && <LocumTable />}
