@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { CheckCircle2, AlertCircle, Clock, CalendarDays, Plus, Loader2, Check } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
+import { paymentRemindersService, PaymentReminderResponse } from "@/lib/services/paymentRemindersService";
 
 export function PaymentReminders() {
-  const [reminders, setReminders] = useState<any[]>([]);
+  const [reminders, setReminders] = useState<PaymentReminderResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form State
@@ -22,49 +23,29 @@ export function PaymentReminders() {
   }, []);
 
   const fetchReminders = async () => {
-    const { data, error } = await supabase
-      .from('payment_reminders')
-      .select('*')
-      .order('due_date', { ascending: true });
-
-    if (data) setReminders(data);
+    try {
+      const data = await paymentRemindersService.fetchReminders();
+      setReminders(data);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error("Failed to load reminders: " + error.message);
+      }
+    }
     setIsLoading(false);
   };
 
   const handleRollover = async (id: string, currentDueDate: string, amount: number, title: string) => {
     try {
-      // a) Insert into expenses
-      const expensePayload = {
-        amount: Number(amount),
-        category: 'Facility Bills',
-        description: `Paid Reminder: ${title}`,
-        logged_by_name: 'Admin',
-        date_logged: new Date().toISOString().split('T')[0]
-      };
+      const updatedReminder = await paymentRemindersService.rolloverReminder(id, currentDueDate, amount, title);
       
-      const { error: expError } = await supabase.from('expenses').insert([expensePayload]);
-      if (expError) throw expError;
-
-      // b) Update payment_reminders
-      const oldDate = new Date(currentDueDate);
-      oldDate.setMonth(oldDate.getMonth() + 1);
-      const newDueDate = oldDate.toISOString().split('T')[0];
-
-      const { data, error: remError } = await supabase
-        .from('payment_reminders')
-        .update({ due_date: newDueDate, status: 'Upcoming' })
-        .eq('id', id)
-        .select();
-
-      if (remError) throw remError;
-
       // c) Update local React state instantly
-      if (data && data.length > 0) {
-        setReminders(reminders.map(rem => rem.id === id ? data[0] : rem).sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
+      setReminders(reminders.map(rem => rem.id === id ? updatedReminder : rem).sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error("ERROR processing rollover: " + error.message);
+      } else {
+        toast.error("ERROR processing rollover: Unknown error");
       }
-    } catch (error: any) {
-      alert("ERROR processing rollover: " + error.message);
-      console.error(error);
     }
   };
 
@@ -81,25 +62,22 @@ export function PaymentReminders() {
         status: 'Upcoming' // Default status for new bills
       };
 
-      const { data, error } = await supabase
-        .from('payment_reminders')
-        .insert([payload])
-        .select();
-
-      if (error) throw error;
+      const newReminder = await paymentRemindersService.addReminder(payload);
 
       // Update UI instantly
-      if (data) {
-        setReminders([...reminders, data[0]].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
-      }
+      setReminders([...reminders, newReminder].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
 
       // Clear form
       setTitle("");
       setAmount("");
       setDueDate("");
       setIsAdding(false);
-    } catch (error: any) {
-      alert("DATABASE REJECTED REMINDER: " + error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error("DATABASE REJECTED REMINDER: " + error.message);
+      } else {
+        toast.error("DATABASE REJECTED REMINDER: Unknown error");
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { AlertOctagon, CheckCircle2, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
+import { headachesService, HeadacheResponse } from "@/lib/services/headachesService";
 
 export function HeadachesWidget() {
-  const [headaches, setHeadaches] = useState<any[]>([]);
+  const [headaches, setHeadaches] = useState<HeadacheResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form State
@@ -18,16 +19,15 @@ export function HeadachesWidget() {
   // Fetch active headaches on load
   const fetchHeadaches = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('headaches')
-      .select('*')
-      .neq('status', 'Resolved')
-      .order('date_reported', { ascending: false });
-
-    if (error) {
-      console.error("Fetch error:", error);
-    } else {
-      setHeadaches(data || []);
+    try {
+      const data = await headachesService.fetchActiveHeadaches();
+      setHeadaches(data);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error("Fetch error: " + error.message);
+      } else {
+        toast.error("Fetch error: Unknown error");
+      }
     }
     setIsLoading(false);
   };
@@ -53,14 +53,7 @@ export function HeadachesWidget() {
         date_reported: new Date().toISOString().split('T')[0],
       };
 
-      console.log("Sending payload to Supabase:", payload);
-
-      const { data, error } = await supabase
-        .from('headaches')
-        .insert([payload])
-        .select();
-
-      if (error) throw error;
+      await headachesService.logHeadache(payload);
 
       // Success! Clear the form and refresh the list
       setDescription("");
@@ -68,9 +61,12 @@ export function HeadachesWidget() {
       setDepartment("General / Facility");
       await fetchHeadaches();
 
-    } catch (error: any) {
-      alert("DATABASE REJECTED INSERT: " + error.message);
-      console.error("Full error:", error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error("DATABASE REJECTED INSERT: " + error.message);
+      } else {
+        toast.error("DATABASE REJECTED INSERT: Unknown error");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -79,17 +75,15 @@ export function HeadachesWidget() {
   // Handle Marking as Resolved
   const handleResolve = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('headaches')
-        .update({ status: 'Resolved' })
-        .eq('id', id);
-
-      if (error) throw error;
-
+      await headachesService.resolveHeadache(id);
       // Remove from UI immediately
       setHeadaches(headaches.filter(h => h.id !== id));
-    } catch (error: any) {
-      alert("Failed to resolve: " + error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error("Failed to resolve: " + error.message);
+      } else {
+        toast.error("Failed to resolve: Unknown error");
+      }
     }
   };
 
