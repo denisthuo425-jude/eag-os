@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { CalendarDays, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -17,31 +17,51 @@ const STAFF_NAMES = [
   "Valentine Mwangi"
 ];
 
-const DAYS_IN_MONTH = 31;
-
 export interface RosterRecord {
   staff_name: string;
+  year: number;
+  month: number;
   day: number;
   status: "D" | "OFF";
 }
 
 type RosterState = Record<string, Record<number, "D" | "OFF">>;
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June", 
+  "July", "August", "September", "October", "November", "December"
+];
+
+const currentYear = new Date().getFullYear();
+const YEARS = [currentYear - 1, currentYear, currentYear + 1];
+
 export function DutyRoster() {
-  const [roster, setRoster] = useState<RosterState>(() => {
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [daysInMonth, setDaysInMonth] = useState<number>(31);
+  const [roster, setRoster] = useState<RosterState>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const days = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    setDaysInMonth(days);
+
     const initialState: RosterState = {};
     STAFF_NAMES.forEach(name => {
       initialState[name] = {};
-      for (let i = 1; i <= DAYS_IN_MONTH; i++) {
-        initialState[name][i] = "D"; // Default all to Day Shift
+      for (let day = 1; day <= days; day++) {
+        const date = new Date(selectedYear, selectedMonth, day);
+        const isSunday = date.getDay() === 0;
+        initialState[name][day] = isSunday ? "OFF" : "D";
       }
     });
-    return initialState;
-  });
-
-  const [isSaving, setIsSaving] = useState(false);
+    setRoster(initialState);
+  }, [selectedMonth, selectedYear]);
 
   const toggleStatus = (name: string, day: number) => {
+    const date = new Date(selectedYear, selectedMonth, day);
+    if (date.getDay() === 0) return; // Locked on Sundays
+
     setRoster(prev => {
       const current = prev[name][day];
       const next = current === "D" ? "OFF" : "D";
@@ -60,9 +80,11 @@ export function DutyRoster() {
     try {
       const payload: RosterRecord[] = [];
       STAFF_NAMES.forEach(name => {
-        for (let day = 1; day <= DAYS_IN_MONTH; day++) {
+        for (let day = 1; day <= daysInMonth; day++) {
           payload.push({
             staff_name: name,
+            year: selectedYear,
+            month: selectedMonth + 1,
             day: day,
             status: roster[name][day]
           });
@@ -85,7 +107,7 @@ export function DutyRoster() {
     }
   };
 
-  const daysArray = Array.from({ length: DAYS_IN_MONTH }, (_, i) => i + 1);
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   return (
     <Card className="col-span-1 overflow-hidden">
@@ -97,51 +119,92 @@ export function DutyRoster() {
           </CardTitle>
           <CardDescription>Plan and lock in staff shifts for the month</CardDescription>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors"
-        >
-          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          {isSaving ? "Saving..." : "Save Roster"}
-        </button>
+        
+        <div className="flex items-center space-x-4">
+          <select 
+            value={selectedMonth} 
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="p-2 border border-slate-300 rounded text-sm bg-white"
+          >
+            {MONTHS.map((m, idx) => (
+              <option key={m} value={idx}>{m}</option>
+            ))}
+          </select>
+          
+          <select 
+            value={selectedYear} 
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="p-2 border border-slate-300 rounded text-sm bg-white"
+          >
+            {YEARS.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0 z-10">
-              <tr>
-                <th className="px-4 py-3 min-w-[150px] sticky left-0 bg-slate-100 z-20 border-r border-slate-200">Staff Name</th>
-                {daysArray.map(day => (
-                  <th key={day} className="px-2 py-3 text-center min-w-[50px] border-r border-slate-200">{day}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {STAFF_NAMES.map((name, idx) => (
-                <tr key={name} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                  <td className={`px-4 py-3 font-medium text-slate-800 sticky left-0 z-10 border-r border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                    {name}
-                  </td>
+          {Object.keys(roster).length > 0 && (
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 min-w-[150px] sticky left-0 bg-slate-100 z-20 border-r border-slate-200">Staff Name</th>
                   {daysArray.map(day => {
-                    const status = roster[name][day];
+                    const date = new Date(selectedYear, selectedMonth, day);
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    const isSunday = date.getDay() === 0;
                     return (
-                      <td key={day} className="p-1 border-r border-slate-100 text-center">
-                        <button
-                          onClick={() => toggleStatus(name, day)}
-                          className={`w-full h-full py-1.5 rounded font-bold text-xs transition-colors ${
-                            status === "D" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-rose-100 text-rose-700 hover:bg-rose-200"
-                          }`}
-                        >
-                          {status}
-                        </button>
-                      </td>
+                      <th key={day} className={`px-2 py-3 text-center min-w-[50px] border-r border-slate-200 ${isSunday ? 'bg-slate-200' : ''}`}>
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs text-slate-400">{dayName}</span>
+                          <span>{day}</span>
+                        </div>
+                      </th>
                     );
                   })}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {STAFF_NAMES.map((name, idx) => (
+                  <tr key={name} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                    <td className={`px-4 py-3 font-medium text-slate-800 sticky left-0 z-10 border-r border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                      {name}
+                    </td>
+                    {daysArray.map(day => {
+                      const status = roster[name][day];
+                      const isSunday = new Date(selectedYear, selectedMonth, day).getDay() === 0;
+                      return (
+                        <td key={day} className={`p-1 border-r border-slate-100 text-center ${isSunday ? 'bg-slate-100' : ''}`}>
+                          <button
+                            onClick={() => toggleStatus(name, day)}
+                            disabled={isSunday}
+                            className={`w-full h-full py-1.5 rounded font-bold text-xs transition-colors ${
+                              status === "D" 
+                                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" 
+                                : isSunday 
+                                  ? "bg-slate-200 text-slate-500 cursor-not-allowed" 
+                                  : "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </CardContent>
     </Card>
