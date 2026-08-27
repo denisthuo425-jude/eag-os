@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { CalendarDays, Save, Loader2 } from "lucide-react";
+import { CalendarDays, Save, Loader2, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
 
@@ -17,15 +17,12 @@ const STAFF_NAMES = [
   "Valentine Mwangi"
 ];
 
-export interface RosterRecord {
-  staff_name: string;
-  year: number;
-  month: number;
-  day: number;
-  status: "D" | "OFF";
-}
-
 type RosterState = Record<string, Record<number, "D" | "OFF">>;
+
+export interface RosterPayload {
+  month_year: string;
+  roster_data: RosterState;
+}
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June", 
@@ -78,22 +75,18 @@ export function DutyRoster() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const payload: RosterRecord[] = [];
-      STAFF_NAMES.forEach(name => {
-        for (let day = 1; day <= daysInMonth; day++) {
-          payload.push({
-            staff_name: name,
-            year: selectedYear,
-            month: selectedMonth + 1,
-            day: day,
-            status: roster[name][day]
-          });
-        }
-      });
+      const monthStr = (selectedMonth + 1).toString().padStart(2, '0');
+      const payload: RosterPayload = {
+        month_year: `${selectedYear}-${monthStr}`,
+        roster_data: roster
+      };
       
-      const { error } = await supabase.from('duty_roster').insert(payload);
+      const { error } = await supabase.from('duty_roster').insert([payload]);
       
-      if (error) throw error;
+      if (error) {
+        toast.error(`Supabase Error: ${error.message}`);
+        return;
+      }
       
       toast.success("Duty Roster saved securely!");
     } catch (err: unknown) {
@@ -110,47 +103,79 @@ export function DutyRoster() {
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   return (
-    <Card className="col-span-1 overflow-hidden">
-      <CardHeader className="flex flex-row justify-between items-center bg-slate-50 border-b border-slate-100 pb-4">
-        <div>
-          <CardTitle className="flex items-center space-x-2">
-            <CalendarDays className="w-5 h-5 text-primary" />
-            <span>Monthly Duty Roster</span>
-          </CardTitle>
-          <CardDescription>Plan and lock in staff shifts for the month</CardDescription>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <select 
-            value={selectedMonth} 
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="p-2 border border-slate-300 rounded text-sm bg-white"
-          >
-            {MONTHS.map((m, idx) => (
-              <option key={m} value={idx}>{m}</option>
-            ))}
-          </select>
+    <>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-area, .print-area * {
+            visibility: visible;
+          }
+          .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100vw;
+          }
+          .print-hidden {
+            display: none !important;
+          }
+          @page {
+            size: landscape;
+            margin: 1cm;
+          }
+        }
+      `}</style>
+      <Card className="col-span-1 overflow-hidden print-area">
+        <CardHeader className="flex flex-row justify-between items-center bg-slate-50 border-b border-slate-100 pb-4">
+          <div>
+            <CardTitle className="flex items-center space-x-2">
+              <CalendarDays className="w-5 h-5 text-primary" />
+              <span>Monthly Duty Roster</span>
+            </CardTitle>
+            <CardDescription className="print-hidden">Plan and lock in staff shifts for the month</CardDescription>
+          </div>
           
-          <select 
-            value={selectedYear} 
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="p-2 border border-slate-300 rounded text-sm bg-white"
-          >
-            {YEARS.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          <div className="flex items-center space-x-4 print-hidden">
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="p-2 border border-slate-300 rounded text-sm bg-white"
+            >
+              {MONTHS.map((m, idx) => (
+                <option key={m} value={idx}>{m}</option>
+              ))}
+            </select>
+            
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="p-2 border border-slate-300 rounded text-sm bg-white"
+            >
+              {YEARS.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
 
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors"
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            {isSaving ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </CardHeader>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center px-4 py-2 bg-slate-200 text-slate-800 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </button>
+
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-blue-800 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           {Object.keys(roster).length > 0 && (
@@ -208,5 +233,6 @@ export function DutyRoster() {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
