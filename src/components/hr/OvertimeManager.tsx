@@ -3,24 +3,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Plus, Printer } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { Staff } from "./StaffDirectory";
-
-type OvertimeStatus = "Logged" | "Approved";
-
-interface OvertimeLog {
-  id: string;
-  date_logged?: string;
-  staff_id: string;
-  staff_name?: string;
-  hours_worked?: number;
-  rate?: string;
-  description: string;
-  status: OvertimeStatus;
-}
+import { overtimeService, Staff, OvertimeLogResponse } from "@/lib/services/overtimeService";
+import { OvertimeLogPayload } from "@/lib/schemas/overtimeSchema";
 
 export function OvertimeManager() {
-  const [logs, setLogs] = useState<OvertimeLog[]>([]);
+  const [logs, setLogs] = useState<OvertimeLogResponse[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,29 +21,17 @@ export function OvertimeManager() {
   const fetchData = async () => {
     setLoading(true);
     
-    // Fetch staff for dropdown
-    const { data: staffData } = await supabase
-      .from('staff')
-      .select('*')
-      .order('first_name', { ascending: true });
-      
-    if (staffData) {
-      setStaffList(staffData as Staff[]);
+    try {
+      const staffData = await overtimeService.fetchStaff();
+      setStaffList(staffData);
       const initialChecked: Record<string, boolean> = {};
       staffData.forEach(s => { initialChecked[s.id] = true; });
       setCheckedStaff(initialChecked);
-    }
 
-    // Fetch overtime logs
-    const { data: logData, error } = await supabase
-      .from('overtime_logs')
-      .select('*')
-      .order('date_logged', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching overtime logs:", error);
-    } else if (logData) {
-      setLogs(logData as OvertimeLog[]);
+      const logData = await overtimeService.fetchOvertimeLogs();
+      setLogs(logData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
     
     setLoading(false);
@@ -76,10 +51,10 @@ export function OvertimeManager() {
       return;
     }
 
-    const payloads = selectedIds.map(id => {
+    const payloads: OvertimeLogPayload[] = selectedIds.map(id => {
       const staffMember = staffList.find(s => s.id === id);
       return {
-        date_logged: dateWorked, // Assuming the db schema uses date_logged for the date worked
+        date_logged: dateWorked,
         staff_id: id,
         staff_name: staffMember ? `${staffMember.first_name} ${staffMember.last_name}` : "Unknown",
         hours_worked: parseFloat(hoursWorked),
@@ -89,25 +64,21 @@ export function OvertimeManager() {
       };
     });
 
-    const { data, error } = await supabase
-      .from('overtime_logs')
-      .insert(payloads)
-      .select();
-
-    if (error) {
-      console.error("Error adding overtime log:", error);
-      alert("Error adding overtime: " + error.message);
-    } else if (data) {
-      // Data is an array of inserted records
-      setLogs([...(data as OvertimeLog[]), ...logs]);
+    try {
+      const newLogs = await overtimeService.bulkLogOvertime(payloads);
+      
+      setLogs([...newLogs, ...logs]);
       setDateWorked("");
       setHoursWorked("");
       setRate("");
       
-      // Reset checkboxes to all true
       const initialChecked: Record<string, boolean> = {};
       staffList.forEach(s => { initialChecked[s.id] = true; });
       setCheckedStaff(initialChecked);
+    } catch (error) {
+      if (error instanceof Error) {
+        alert("Error adding overtime: " + error.message);
+      }
     }
   };
 

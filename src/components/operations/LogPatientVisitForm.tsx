@@ -3,17 +3,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Users, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
-
-interface PatientVisitPayload {
-  visit_date: string;
-  age: number;
-  gender: string;
-  demographic: string;
-  payment_type: string;
-  diagnosis?: string;
-}
+import { patientService } from "@/lib/services/patientService";
+import { PatientVisitPayload } from "@/lib/schemas/patientSchema";
 
 export function LogPatientVisitForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,11 +34,7 @@ export function LogPatientVisitForm() {
         payload.diagnosis = diagnosis.trim();
       }
 
-      const { error } = await supabase
-        .from('patient_visits')
-        .insert([payload]);
-
-      if (error) throw error;
+      await patientService.logPatientVisit(payload);
 
       setAge("");
       setDiagnosis("");
